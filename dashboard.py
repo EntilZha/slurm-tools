@@ -1,4 +1,5 @@
 from typing import Optional
+import pandas as pd
 import streamlit as st
 from datetime import datetime
 import os
@@ -17,7 +18,7 @@ SLURM_LOG_DIR = os.environ.get("SLURM_DASHBOARD_DIR", "")
 # to avoid trouble with calling this too much
 def squeue():
     output = subprocess.run(
-        f'squeue --format="%.18i %.9P %.30j %.8u %.8T %.10M %.9l %.6D %R" --me',
+        f'squeue --me --Format "JobId,Partition,Name,,State,TimeUsed,NumNodes,Nodelist,tres-per-node,UserName"',
         check=True,
         shell=True,
         capture_output=True,
@@ -27,7 +28,10 @@ def squeue():
     if len(rows) == 1:
         return "No jobs running"
     else:
-        return rows
+        rows = [r.split() for r in rows]
+        header = rows[0]
+        content = rows[1:]
+        return pd.DataFrame(content, columns=header)
 
 
 def slurm_job_info(job_id):
@@ -94,7 +98,10 @@ else:
 slurm_jobs = load_job_logs()
 
 
-st.text(squeue_out)
+if isinstance(squeue_out, str):
+    st.text(squeue_out)
+else:
+    st.table(squeue_out)
 current_job_id = None
 with st.sidebar:
     st.header("Slurm Jobs")
