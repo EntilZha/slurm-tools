@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "slurm-tools"
+version = "0.1.0"
+description = ""
+authors = ["Pedro Rodriguez <me@pedro.ai>"]
+license = "Apache 2"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = "^1.4.3"
+streamlit = "^1.11.0"
+pydantic = "^1.9.1"
+
+[tool.poetry.dev-dependencies]
+black = "^22.6.0"
+pylint = "^2.14.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

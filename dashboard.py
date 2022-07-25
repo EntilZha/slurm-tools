@@ -10,7 +10,20 @@ from pathlib import Path
 import glob
 
 st.set_page_config(layout="wide")
-
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        width: 450px;
+    }
+    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+        width: 450px;
+        margin-left: -450px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 SLURM_LOG_DIR = os.environ.get("SLURM_DASHBOARD_DIR", "")
 
 
@@ -18,7 +31,7 @@ SLURM_LOG_DIR = os.environ.get("SLURM_DASHBOARD_DIR", "")
 # to avoid trouble with calling this too much
 def squeue():
     output = subprocess.run(
-        f'squeue --me --Format "JobId,Partition,Name,,State,TimeUsed,NumNodes,Nodelist,tres-per-node,UserName"',
+        f'squeue --me --Format "JobId:|,Partition:|,Name:|,State:|,TimeUsed:|,NumNodes:|,Nodelist:|,tres-per-node:|,UserName"',
         check=True,
         shell=True,
         capture_output=True,
@@ -28,7 +41,7 @@ def squeue():
     if len(rows) == 1:
         return "No jobs running"
     else:
-        rows = [r.split() for r in rows]
+        rows = [[f.strip() for f in r.split("|")] for r in rows]
         header = rows[0]
         content = rows[1:]
         return pd.DataFrame(content, columns=header)
@@ -45,6 +58,9 @@ def slurm_job_info(job_id):
 class Job(BaseModel):
     job_id: str
     info: Optional[str]
+    cache_state: Optional[str]
+    cache_out: Optional[str]
+    cache_err: Optional[str]
 
     @property
     def out_path(self):
@@ -62,13 +78,30 @@ class Job(BaseModel):
 
     @property
     def out(self):
-        with open(self.out_path) as f:
-            return f.read()
+        if self.cache_out is None:
+            with open(self.out_path) as f:
+                self.cache_out = f.read()
+        return self.cache_out
 
     @property
     def err(self):
-        with open(self.err_path) as f:
-            return f.read()
+        if self.cache_err is None:
+            with open(self.err_path) as f:
+                self.cache_err = f.read()
+        return self.cache_err
+
+    @property
+    def state(self):
+        if self.cache_state is None:
+            if "Submitted job triggered an exception" in self.out:
+                self.cache_state = "ERROR"
+            elif "Job has timed out" in self.out:
+                self.cache_state = "TIMED OUT"
+            elif "Job completed successfully" in self.out:
+                self.cache_state = "COMPLETED"
+            else:
+                self.cache_state = "UNKNOWN"
+        return self.cache_state
 
 
 def load_job_logs():
@@ -108,11 +141,17 @@ with st.sidebar:
     if len(slurm_jobs) == 0:
         st.warning("There are no slurm jobs in directory, so nothing to do yet")
     else:
+        col1, col2, col3, col4 = st.columns(4)
+        col1.subheader("Job ID")
+        col2.subheader("Time")
+        col3.subheader("State")
+        col4.subheader("View")
         for job_id, job in sorted(slurm_jobs.items(), reverse=True):
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             col1.write(job_id)
-            col2.write(job.modified)
-            button_placeholder = col3.empty()
+            col2.write(job.modified.strftime("%Y-%m-%d %H:%M"))
+            col3.write(job.state)
+            button_placeholder = col4.empty()
             view_job = button_placeholder.button("View", key=job_id)
             if view_job:
                 current_job_id = job_id
