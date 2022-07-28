@@ -1,5 +1,7 @@
 # slurm-tools
 
+This repo contains useful slurm tools.
+
 ## Installation
 
 Install conda python and poetry.
@@ -8,6 +10,11 @@ Install conda python and poetry.
 2. Run `poetry install`
 
 ## Dashboard
+
+When running, the dashboard looks like this:
+![dashboard-screenshot](https://user-images.githubusercontent.com/1382460/181595475-85b14f52-cc72-4229-a731-739ec97ae3f2.jpeg)
+
+
 
 The dashbaord works by inspecting the files contained within the directory specified by `SLURM_DASHBOARD_DIR` for files that follow the slurm logging format `IDENTIFIER_log.out` and `IDENTIFIER_log.out`, where `IDENTIFIER` can be the the job id and array id appended. This is the default format used by submitit, which is how I submit slurm commands, hence that choice.
 
