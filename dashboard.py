@@ -50,7 +50,7 @@ def squeue():
 def slurm_job_info(job_id):
     job_id = job_id.replace("_0", "")
     output = subprocess.run(
-        f"sacct -j {job_id} --format 'JobID,JobName,Partition,Account,AllocCPUS,ReqMem,AllocTRESState,ExitCode'", check=True, shell=True, capture_output=True, text=True
+        f"sacct -j {job_id} --format 'JobID,JobName,Partition,Account,AllocCPUS,ReqMem,AllocTRES,State,ExitCode'", check=True, shell=True, capture_output=True, text=True
     )
     return output.stdout
 
