@@ -7,7 +7,9 @@ This repo contains useful slurm tools.
 Install conda python and poetry.
 
 1. Run `conda create -n tools python=3.8`
-2. Run `poetry install`
+2. Run `conda activate tools`
+3. Run `conda install poetry`
+4. Run `poetry install`
 
 ## Dashboard
 
