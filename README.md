@@ -41,3 +41,18 @@ Run with `streamlit run dashboard.py`
 Configure via:
 
 - By setting environment `SLURM_DASHBOARD_DIR`
+
+## Snapshot Tool
+
+This tool helps isolate experiments on NFS by:
+1. Copying the contents of the current directory to another one, keyed either randomly or using a given identifier
+2. Changing the current directory to that new directory
+3. Executing the given command in the new directory
+
+This helps to later reference what code is actually run, even if the source control version is changed (e.g., submit a long running experiment, continue coding while it runs, and need to reference original code).
+This also prevents situations in NFS where a running experiment may try to read newly modified code and crashes due to that (e.g., if the job is pre-empted and then rerun at a later time)
+
+For example, you can run:
+```
+$ snapshot --experiment-id 42 'echo "my awesome experiment"'
+```

@@ -10,6 +10,8 @@ python = "^3.8"
 pandas = "^1.4.3"
 streamlit = "^1.11.0"
 pydantic = "^1.9.1"
+rich = "^12.5.1"
+typer = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
