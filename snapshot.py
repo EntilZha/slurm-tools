@@ -16,7 +16,6 @@ console = Console()
 def main(
     command: str,
     exclude: List[str] = None,
-    # CHANGE ME: To where you want to save experiments to.
     base_dir: str = SNAPSHOT_DIR,
     experiment_id: Optional[str] = None,
     dry_run: bool = False,
