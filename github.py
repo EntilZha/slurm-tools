@@ -36,8 +36,8 @@ def parse_event(event: Dict):
         case 'PushEvent':
             committer = payload['commits'][0]['author']['name']
             message = payload['commits'][0]['message']
-            commit_url = payload['commits'][0]['url'].replace('api.', '')
-            return f'[Commit](commit_url) by {committer} on [{repo}]({repo_url}): {message}'
+            commit_url = payload['commits'][0]['url'].replace('api.github.com/repos', 'github.com')
+            return f'[Commit]({commit_url}) by {committer} on [{repo}]({repo_url}): {message}'
         case 'IssueCommentEvent':
             commenter = payload['comment']['user']['login']
             comment_url = payload['comment']['html_url']
@@ -71,7 +71,7 @@ st.header(f"Github: Activity List for {USER}")
 
 all_events = [e for e in list_events() if event_filter(e)]
 
-recent_repos = {event['repo']['name'] for event in all_events}
+recent_repos = sorted({event['repo']['name'] for event in all_events})
 
 st.subheader("Recently Active Repositories")
 
