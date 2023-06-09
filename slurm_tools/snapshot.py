@@ -8,11 +8,17 @@ import os
 import typer
 from rich.console import Console
 
-SNAPSHOT_DIR = os.environ.get("SNAPSHOT_DIR", "/checkpoint")
+SNAPSHOT_DIR = os.environ.get("SNAPSHOT_DIR", "snapshotted_experiments")
+if 'SNAPSHOT_EXCLUDE' in os.environ:
+    EXCLUDE = os.environ.split(',')
+else:
+    EXCLUDE = None
 
 console = Console()
+cli = typer.Typer()
 
 
+@cli.command()
 def main(
     command: str,
     exclude: List[str] = None,
@@ -31,6 +37,9 @@ def main(
     For example, you can run:
     $ snapshot --experiment-id 42 'echo "my awesome experiment"'
     """
+    if exclude is None and EXCLUDE is not None:
+        exclude = exclude
+
     if dry_run:
         console.log("Running in dry run mode, no changes will be made")
     current_dir = os.getcwd()
@@ -57,4 +66,4 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    cli()

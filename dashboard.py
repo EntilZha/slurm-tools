@@ -138,6 +138,7 @@ else:
 current_job_id = None
 with st.sidebar:
     st.header("Slurm Jobs")
+    job_prefix_filter = st.text_input("Job ID Prefix Filter")
     if len(slurm_jobs) == 0:
         st.warning("There are no slurm jobs in directory, so nothing to do yet")
     else:
@@ -148,6 +149,9 @@ with st.sidebar:
         col4.subheader("View")
         for job_id, job in sorted(slurm_jobs.items(), reverse=True):
             col1, col2, col3, col4 = st.columns(4)
+            if job_prefix_filter != "":
+                if not job_id.startswith(job_prefix_filter):
+                    continue
             col1.write(job_id)
             col2.write(job.modified.strftime("%Y-%m-%d %H:%M"))
             col3.write(job.state)

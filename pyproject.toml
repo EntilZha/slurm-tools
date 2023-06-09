@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "slurm-tools"
+name = "slurm_tools"
 version = "0.1.0"
 description = ""
 authors = ["Pedro Rodriguez <me@pedro.ai>"]
@@ -8,13 +8,14 @@ license = "Apache 2"
 [tool.poetry.dependencies]
 python = "^3.8"
 pandas = "^1.4.3"
-streamlit = "^1.11.0"
 pydantic = "^1.9.1"
-rich = "^12.5.1"
 typer = "^0.6.1"
 requests = "^2.28.1"
 watchdog = "^2.1.9"
+streamlit = "^1.11.0"
 streamlit-autorefresh = "^0.0.1"
+textual = "^0.27.0"
+rich = "^13.4.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
@@ -24,3 +25,13 @@ isort = "^5.10.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+known_first_party = "slurm_tools"
+profile = "black"
+multi_line_output = 3
+
+[tool.poetry.scripts]
+stui = 'slurm_tools.slurm_tui:cli'
+snapshot = "slurm_tools.snapshot:cli"
+slogs = "slurm_tools.slurm_logs:cli"
