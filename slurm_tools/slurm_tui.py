@@ -22,6 +22,8 @@ from textual.widgets import (
 )
 
 
+LOG_PRINT_NLINES = 55
+
 SQUEUE = "squeue --me --Format='JobID:|,ArrayJobID:|,ArrayTaskID:|,Partition:|,Name:|,State:|,TimeUsed:|,NumNodes:|,Nodelist:|,STDOUT:|,STDERR:'"
 FIELDS = [
     "job_id",
@@ -226,6 +228,10 @@ class SlurmDashboardApp(App):
     BINDINGS = [
         ("r", "refresh_slurm", "Refresh Slurm"),
         ("l", "refresh_logs", "Refresh Logs"),
+        ("u", "go_up", "Go up"),
+        ("d", "go_down", "Go down"),
+        ("b", "goto_begin", "Go to beginning"),
+        ("e", "goto_end", "Go to end"),
         ("h", "help", "Help"),
         ("q", "quit", "Quit"),
     ]
@@ -236,6 +242,36 @@ class SlurmDashboardApp(App):
 
     def action_refresh_logs(self) -> None:
         self._update_log_outputs()
+
+    def action_go_up(self) -> None:
+        if self.entry is None:
+            return
+        lineno_str = f"std{self._get_active_tab()}_lineno"
+        self.entry[lineno_str]  = max(self.entry[lineno_str] - LOG_PRINT_NLINES // 2, 0)
+        self._rewrite_log_outputs()
+
+    def action_go_down(self) -> None:
+        if self.entry is None:
+            return
+        lineno_str = f"std{self._get_active_tab()}_lineno"
+        buf_len = len(self.entry[f"std{self._get_active_tab()}_buffer"])
+        self.entry[lineno_str]  = min(self.entry[lineno_str] + LOG_PRINT_NLINES // 2, buf_len - LOG_PRINT_NLINES - 1)
+        self._rewrite_log_outputs()
+
+    def action_goto_begin(self) -> None:
+        if self.entry is None:
+            return
+        lineno_str = f"std{self._get_active_tab()}_lineno"
+        self.entry[lineno_str]  = 0
+        self._rewrite_log_outputs()
+
+    def action_goto_end(self) -> None:
+        if self.entry is None:
+            return
+        lineno_str = f"std{self._get_active_tab()}_lineno"
+        buf_len = len(self.entry[f"std{self._get_active_tab()}_buffer"])
+        self.entry[lineno_str]  = buf_len - LOG_PRINT_NLINES - 1
+        self._rewrite_log_outputs()
 
     async def _update_slurm(self):
         self.squeue_rows, self.squeue_lookup = await run_squeue()
@@ -266,7 +302,26 @@ class SlurmDashboardApp(App):
         self.query_one("#stdout_filename").update("No Job Selected")
         self.query_one("#stderr_filename").update("No Job Selected")
 
-    def _update_log_outputs(self):
+    def _get_active_tab(self):
+        return [None, "out", "err"][int(self.query_one("#logs").active.split("-")[1])]
+
+    def _update_entry_buffers(self):
+        if self.entry is None:
+            return
+        self.entry["stdout_buffer"] = None
+        if self.entry["stdout"] is not None:
+            stdout_file = self.entry["stdout"][self.selected_node]
+            if os.path.exists(stdout_file) and os.path.isfile(stdout_file):
+                with open(stdout_file) as f:
+                    self.entry["stdout_buffer"] = f.readlines()
+        self.entry["stderr_buffer"] = None
+        if self.entry["stderr"] is not None:
+            stderr_file = self.entry["stderr"][self.selected_node]
+            if os.path.exists(stderr_file) and os.path.isfile(stderr_file):
+                with open(stderr_file) as f:
+                    self.entry["stderr_buffer"] = f.readlines()
+    
+    def _rewrite_log_outputs(self):
         if self.entry is None:
             return
         if self.entry["stdout"] is None:
@@ -280,11 +335,11 @@ class SlurmDashboardApp(App):
             self.query_one("#stdout_filename").update(f"STDOUT Log File: {stdout_file}")
 
             if os.path.exists(stdout_file) and os.path.isfile(stdout_file):
-                for line in read_file(stdout_file):
-                    self.query_one("#stdout").write(
-                        line.strip(),
-                        width=os.get_terminal_size().columns - 2,
-                    )
+                lineno = self.entry["stdout_lineno"]
+                self.query_one("#stdout").write(
+                    ''.join(self.entry["stdout_buffer"][lineno : lineno + LOG_PRINT_NLINES]),
+                    width=os.get_terminal_size().columns - 2,
+                )
             else:
                 self.query_one("#stdout").write(
                     f"Path does not exist: {stdout_file}, is it configured with slurm via --output?"
@@ -300,15 +355,22 @@ class SlurmDashboardApp(App):
             stderr_file = self.entry["stderr"][self.selected_node]
             self.query_one("#stderr_filename").update(f"STDERR Log File: {stderr_file}")
             if os.path.exists(stderr_file) and os.path.isfile(stderr_file):
-                for line in read_file(stderr_file):
-                    self.query_one("#stderr").write(
-                        line.strip(),
-                        width=os.get_terminal_size().columns - 2,
-                    )
+                lineno = self.entry["stderr_lineno"]
+                self.query_one("#stderr").write(
+                    ''.join(self.entry["stderr_buffer"][lineno : lineno + LOG_PRINT_NLINES]),
+                    width=os.get_terminal_size().columns - 2,
+                )
             else:
                 self.query_one("#stderr").write(
                     f"Path does not exist: {stderr_file}, is it configured with slurm via --error?"
                 )
+
+    def _update_log_outputs(self):
+        if self.entry is None:
+            return
+        self._update_entry_buffers()
+        self._rewrite_log_outputs()
+
 
     async def on_data_table_row_selected(self, event: DataTable.RowSelected):
         job_id, task_id = event.row_key.value.split("_")
@@ -316,6 +378,10 @@ class SlurmDashboardApp(App):
         if key in self.squeue_lookup:
             entry = self.squeue_lookup[(job_id, task_id)]
             self.entry = entry
+            self.entry["stdout_buffer"] = None
+            self.entry["stdout_lineno"] = 0
+            self.entry["stderr_buffer"] = None
+            self.entry["stderr_lineno"] = 0
         else:
             raise ValueError(f"Unexpected missing key {key} in:\n{self.squeue_lookup}")
         if self.entry["state"] == "RUNNING":
