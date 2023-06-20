@@ -82,29 +82,34 @@ async def run_squeue():
                 .replace("%A", row["array_job_id"])
                 .replace("%a", row["array_task_id"])
             }
-            row["stderr"] = {
-                0: row["stderr"]
-                .replace("%A", row["array_job_id"])
-                .replace("%a", row["array_task_id"])
-            }
         elif "%n" in row["stdout"]:
             stdout_entries = {}
-            stderr_entries = {}
             for node_id in range(int(row["num_nodes"])):
                 stdout_entries[node_id] = (
                     row["stdout"]
                     .replace("%j", row["job_id"])
                     .replace("%n", str(node_id))
                 )
+            row["stdout"] = stdout_entries
+        elif "%j" in row["stdout"]:
+            row["stdout"] = {0: row["stdout"].replace("%j", row["job_id"])}
+
+        if "%A" in row["stderr"]:
+            row["stderr"] = {
+                0: row["stderr"]
+                .replace("%A", row["array_job_id"])
+                .replace("%a", row["array_task_id"])
+            }
+        elif "%n" in row["stderr"]:
+            stderr_entries = {}
+            for node_id in range(int(row["num_nodes"])):
                 stderr_entries[node_id] = (
                     row["stderr"]
                     .replace("%j", row["job_id"])
                     .replace("%n", str(node_id))
                 )
-            row["stdout"] = stdout_entries
             row["stderr"] = stderr_entries
-        elif "%j" in row["stdout"]:
-            row["stdout"] = {0: row["stdout"].replace("%j", row["job_id"])}
+        elif "%j" in row["stderr"]:
             row["stderr"] = {0: row["stderr"].replace("%j", row["job_id"])}
 
         if row["stdout"] == "N/A":
