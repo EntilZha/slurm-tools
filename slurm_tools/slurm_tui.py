@@ -48,8 +48,13 @@ async def run_squeue():
         cache = False
 
     if cache:
+        if 'STUI_SQUEUE_FILE' in os.environ:
+            path = os.environ['STUI_SQUEUE_FILE']
+        else:
+            path = 'slurm_tui_squeue.txt'
+            
         proc = await asyncio.create_subprocess_shell(
-            "sleep 3;cat /private/home/par/slurm_tui.txt",
+            f"sleep 1;cat {path}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -93,6 +98,8 @@ async def run_squeue():
             row["stdout"] = stdout_entries
         elif "%j" in row["stdout"]:
             row["stdout"] = {0: row["stdout"].replace("%j", row["job_id"])}
+        else:
+            row['stdout'] = {0: row['stdout']}
 
         if "%A" in row["stderr"]:
             row["stderr"] = {
@@ -111,6 +118,8 @@ async def run_squeue():
             row["stderr"] = stderr_entries
         elif "%j" in row["stderr"]:
             row["stderr"] = {0: row["stderr"].replace("%j", row["job_id"])}
+        else:
+            row['stderr'] = {0: row['stderr']}
 
         if row["stdout"] == "N/A":
             row["stdout"] = None
