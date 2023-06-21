@@ -158,12 +158,14 @@ APP_CSS = """
 
 #stdout {
     height: auto;
-    overflow: hidden;
+    overflow-x: scroll;
+    overflow-y: hidden;
 }
 
 #stderr {
     height: auto;
-    overflow: hidden;
+    overflow-x: scroll;
+    overflow-y: hidden;
 }
 
 
@@ -207,6 +209,10 @@ Screen {
 
 HelpScreen {
     align: center middle;
+}
+.no_x_padding {
+    padding-right: 0;
+    padding-left: 0;
 }
 """
 
@@ -286,7 +292,7 @@ class SlurmDashboardApp(App):
         if self.entry["stdout"] is None:
             self.query_one("#stdout").clear()
             self.query_one("#stdout").write(
-                f"No STDOUT log file configured for selected job"
+                f"No STDOUT log file configured for selected job",
             )
         else:
             stdout_file = self.entry["stdout"][self.selected_node]
@@ -297,7 +303,6 @@ class SlurmDashboardApp(App):
                 for line in read_file(stdout_file):
                     self.query_one("#stdout").write(
                         line.strip(),
-                        width=os.get_terminal_size().columns - 2,
                     )
             else:
                 self.query_one("#stdout").write(
@@ -317,7 +322,6 @@ class SlurmDashboardApp(App):
                 for line in read_file(stderr_file):
                     self.query_one("#stderr").write(
                         line.strip(),
-                        width=os.get_terminal_size().columns - 2,
                     )
             else:
                 self.query_one("#stderr").write(
@@ -372,11 +376,11 @@ class SlurmDashboardApp(App):
             classes="hidden",
         )
         with TabbedContent(id="logs", classes="green_border"):
-            with TabPane("STDOUT"):
+            with TabPane("STDOUT", classes='no_x_padding'):
                 with Vertical(id="stdout_tab"):
                     yield Label(id="stdout_filename", classes="filename_label")
                     yield TextLog(id="stdout", highlight=True, markup=True, wrap=True)
-            with TabPane("STDERR"):
+            with TabPane("STDERR", classes='no_x_padding'):
                 with Vertical(id="stderr_tab"):
                     yield Label(id="stderr_filename", classes="filename_label")
                     yield TextLog(id="stderr", highlight=True, markup=True, wrap=True)
