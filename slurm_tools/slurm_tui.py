@@ -41,6 +41,12 @@ DISPLAY_FIELDS = FIELDS[:-2]
 cli = typer.Typer()
 
 
+def na_to_max_unsigned(array_task_id: str):
+    if array_task_id == 'N/A':
+        return '4294967294'
+    else:
+        return array_task_id
+
 async def run_squeue():
     if "STUI_CACHE" in os.environ:
         cache = bool(os.environ["STUI_CACHE"])
@@ -85,7 +91,7 @@ async def run_squeue():
             row["stdout"] = {
                 0: row["stdout"]
                 .replace("%A", row["array_job_id"])
-                .replace("%a", row["array_task_id"])
+                .replace("%a", na_to_max_unsigned(row["array_task_id"]))
             }
         elif "%n" in row["stdout"]:
             stdout_entries = {}
@@ -105,7 +111,7 @@ async def run_squeue():
             row["stderr"] = {
                 0: row["stderr"]
                 .replace("%A", row["array_job_id"])
-                .replace("%a", row["array_task_id"])
+                .replace("%a", na_to_max_unsigned(row["array_task_id"]))
             }
         elif "%n" in row["stderr"]:
             stderr_entries = {}
