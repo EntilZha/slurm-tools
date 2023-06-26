@@ -164,13 +164,13 @@ APP_CSS = """
 
 #stdout {
     height: auto;
-    overflow-x: scroll;
+    overflow-x: auto;
     overflow-y: hidden;
 }
 
 #stderr {
     height: auto;
-    overflow-x: scroll;
+    overflow-x: auto;
     overflow-y: hidden;
 }
 

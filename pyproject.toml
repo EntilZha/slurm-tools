@@ -10,17 +10,24 @@ python = "^3.8"
 pandas = "^1.4.3"
 pydantic = "^1.9.1"
 typer = "^0.6.1"
-requests = "^2.28.1"
-watchdog = "^2.1.9"
-streamlit = "^1.11.0"
-streamlit-autorefresh = "^0.0.1"
 textual = "^0.27.0"
 rich = "^13.4.1"
+watchdog = {version = "^2.1.9", optional = true}
+streamlit = {version = "^1.11.0", optional = true}
+streamlit-autorefresh = {version = "^0.0.1", optional = true}
+aiohttp = "^3.8.4"
+msgpack = "^1.0.5"
+
+[too.poetry.extras]
+web = ['streamlit', 'streamlit-autorefresh', 'watchdog']
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
 pylint = "^2.14.5"
 isort = "^5.10.1"
+
+[tool.poetry.group.dev.dependencies]
+ipdb = "^0.13.13"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
